@@ -3,6 +3,8 @@ package com.example.mapbox2;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +15,10 @@ import com.mapbox.android.core.location.LocationEnginePriority;
 import com.mapbox.android.core.location.LocationEngineProvider;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -25,14 +30,18 @@ import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationEngineListener, PermissionsListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationEngineListener, PermissionsListener, MapboxMap.OnMapClickListener {
 
     private MapView mapView;
     private MapboxMap map;
+    private Button startButton;
     private PermissionsManager permissionsManager;
     private LocationEngine locationEngine;
     private LocationLayerPlugin locationLayerPlugin;
     private Location originLocation;
+    private Point originPosition;
+    private Point destinationPosition;
+    private Marker destinationMarker;
 
 
     @Override
@@ -41,15 +50,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         Mapbox.getInstance(this,"pk.eyJ1IjoiYXNoaXFtaG1kIiwiYSI6ImNrZmFxbDNjazB5ZmgydHBwa2UwZmJ6cW8ifQ.1IO8S_yDFabqbnkZuAyULQ");
         setContentView(R.layout.activity_main);
-        mapView=(MapView) findViewById(R.id.map);
+        mapView=findViewById(R.id.map);
+        startButton =findViewById(R.id.startButton);
         mapView.onCreate((savedInstanceState));
         mapView.getMapAsync(this);
 
+        startButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
     }
 
     @Override
     public void onMapReady(MapboxMap mapboxMap) {
         map=mapboxMap;
+        map.addOnMapClickListener(this);
         enableLocation();
     }
 
@@ -93,6 +110,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(),
                 location.getLongitude()),13.0));
 
+    }
+
+    @Override
+    public void onMapClick(@NonNull LatLng point) {
+
+        if (destinationMarker!=null){
+            map.removeMarker(destinationMarker);
+        }
+
+        destinationMarker=map.addMarker(new MarkerOptions().position(point));
+
+        destinationPosition =Point.fromLngLat(point.getLongitude(),point.getLatitude());
+        originPosition =Point.fromLngLat(originLocation.getLongitude(),originLocation.getLatitude());
+
+        startButton.setEnabled(true);
+        startButton.setBackgroundResource(R.color.mapboxBlue);
     }
 
     @Override
